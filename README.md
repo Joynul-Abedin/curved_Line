@@ -1,8 +1,15 @@
 # curved_roadmap
 
-A configurable Flutter widget for drawing a curved, winding "roadmap"/journey
-path — with optional milestones, progress fill, gradient strokes, and a
-draw-in entrance animation.
+[![pub package](https://img.shields.io/pub/v/curved_roadmap.svg)](https://pub.dev/packages/curved_roadmap)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![platforms](https://img.shields.io/badge/platforms-all%206-brightgreen.svg)](https://pub.dev/packages/curved_roadmap)
+
+Curved, winding roadmap and journey paths for Flutter — the road-shaped
+progress graphic used in onboarding flows, learning paths, project timelines
+and slide-deck infographics.
+
+Pure Dart and Flutter: no platform channels, no native dependencies, and it
+runs on all six platforms.
 
 | Markers + progress | Marker cards | Gradient + animation |
 |---|---|---|
@@ -12,9 +19,8 @@ draw-in entrance animation.
 |---|---|---|
 | <img src="doc/screenshots/serpentine_milestones.png" width="200"> | <img src="doc/screenshots/serpentine_pins.png" width="200"> | <img src="doc/screenshots/side_captions.png" width="200"> |
 
-See the [example](example) app for all of these running live, plus horizontal
-scrollable roads, curve style variants, theme-extension styling, and
-arbitrary placement.
+Every screen above is in the [example app](example), along with horizontal
+scrollable roads, curve variants, theming and arbitrary placement.
 
 ## Install
 
@@ -23,16 +29,42 @@ dependencies:
   curved_roadmap: ^0.1.0
 ```
 
-## Basic usage
+## Quick start
 
 ```dart
 import 'package:curved_roadmap/curved_roadmap.dart';
 
-const CurvedRoadmap()
+CurvedRoadmap(
+  geometry: const RoadmapGeometry(curveCount: 3),
+  style: const CurvedRoadmapStyle(roadColor: Colors.black87),
+  progress: 0.4,
+  markers: [
+    for (int i = 1; i <= 5; i++)
+      RoadmapMarker(
+        distanceFraction: i / 6,
+        semanticLabel: 'Level $i',
+        onTap: () => print('Level $i'),
+        child: CircleAvatar(child: Text('$i')),
+      ),
+  ],
+)
 ```
 
-By default the road fills its parent's constraints, so give it a sized box,
-or place it in a `Scaffold` body / `Expanded`.
+The road fills its parent's constraints, so give it a bounded box — a
+`Scaffold` body, an `Expanded`, or a `SizedBox`.
+
+## What you can control
+
+| Want to… | Use |
+|---|---|
+| Change the road's shape | [`curveStyle`](#curve-style-variants) — S-curve, serpentine, zigzag, sine, straight |
+| Draw a printed-style infographic | [`SerpentineCurveStyle`](#infographic-roadmaps) |
+| Place captions beside the road | [`RoadmapMarker.side`](#nodes-on-over-or-under-the-road) |
+| Position the road in its box | [`alongStart`/`alongEnd`](#placing-the-road-anywhere-any-length) |
+| Shape every turn by hand | [`WaypointCurveStyle`](#full-manual-control-over-the-curves) |
+| Show completion | [`progress`](#progress-fill) |
+| Animate it in | [`animate`](#draw-in-animation) |
+| Go longer than one screen | [`RoadmapSizing.fixedSegmentExtent`](#scrollable-longer-than-one-screen-roadmaps) |
 
 ## Placing the road: anywhere, any length
 
@@ -331,3 +363,28 @@ SingleChildScrollView(
   ),
 )
 ```
+
+## Accessibility
+
+Tappable markers are exposed as buttons and merge their child's labels, so a
+`Text` or a labelled `Icon` announces itself. For markers whose content
+carries no text of its own, pass `semanticLabel` — an unlabelled button is
+invisible to screen reader users.
+
+## Contributing
+
+Issues and pull requests are welcome at
+[github.com/Joynul-Abedin/curved_Line](https://github.com/Joynul-Abedin/curved_Line/issues).
+
+```bash
+flutter test                       # everything, including goldens
+flutter test --exclude-tags golden # skip goldens off the reference platform
+flutter test --update-goldens      # after an intended visual change
+```
+
+Golden images are rendered by a specific engine version and host platform, so
+they are tagged `golden` and expected to differ elsewhere.
+
+## License
+
+MIT — see [LICENSE](LICENSE).

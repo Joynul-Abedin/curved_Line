@@ -1,4 +1,4 @@
-package com.example.curve_road
+package com.shoka.curved_roadmap
 
 import io.flutter.embedding.android.FlutterActivity
 
