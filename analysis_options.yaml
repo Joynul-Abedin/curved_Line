@@ -21,8 +21,19 @@ linter:
   # `// ignore_for_file: name_of_lint` syntax on the line or in the file
   # producing the lint.
   rules:
-    # avoid_print: false  # Uncomment to disable the `avoid_print` rule
-    # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+    # This is a published package: every public API member must be
+    # documented, since pub.dev scores doc coverage and consumers only ever
+    # see the dartdoc.
+    - public_member_api_docs
+    # Widget-package hygiene.
+    - prefer_single_quotes
+    - require_trailing_commas
+    - avoid_redundant_argument_values
+    - unnecessary_lambdas
+
+analyzer:
+  exclude:
+    - example/**
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

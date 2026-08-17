@@ -1,0 +1,395 @@
+import 'package:curved_roadmap/curved_roadmap.dart';
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const RoadmapExampleApp());
+}
+
+class RoadmapExampleApp extends StatelessWidget {
+  const RoadmapExampleApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'curved_roadmap demo',
+      home: const HomePage(),
+    );
+  }
+}
+
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final demos = <String, WidgetBuilder>{
+      'Default road': (_) => const DefaultRoadPage(),
+      'Markers + progress fill': (_) => const MarkersProgressPage(),
+      'Draw-in animation + gradient': (_) => const AnimatedGradientPage(),
+      'Horizontal, scrollable': (_) => const HorizontalScrollablePage(),
+      'Curve style variants': (_) => const CurveVariantsPage(),
+      'Theme-extension styling': (_) => const ThemeExtensionPage(),
+      'Full manual control (waypoints)': (_) => const WaypointDemoPage(),
+      'Rich marker cards (image/title/notes)': (_) => const RichMarkersPage(),
+      'Place anywhere, any length': (_) => const PlacementPage(),
+    };
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('curved_roadmap examples')),
+      body: ListView(
+        children: demos.entries
+            .map(
+              (entry) => ListTile(
+                title: Text(entry.key),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: entry.value)),
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+}
+
+class DefaultRoadPage extends StatelessWidget {
+  const DefaultRoadPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Default road')),
+      body: const CurvedRoadmap(backgroundColor: Colors.green),
+    );
+  }
+}
+
+class MarkersProgressPage extends StatefulWidget {
+  const MarkersProgressPage({super.key});
+
+  @override
+  State<MarkersProgressPage> createState() => _MarkersProgressPageState();
+}
+
+class _MarkersProgressPageState extends State<MarkersProgressPage> {
+  double _progress = 0.4;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Markers + progress fill')),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Slider(
+              value: _progress,
+              onChanged: (v) => setState(() => _progress = v),
+              label: '${(_progress * 100).round()}% complete',
+            ),
+          ),
+          Expanded(
+            child: CurvedRoadmap(
+              backgroundColor: Colors.green.shade50,
+              geometry: const RoadmapGeometry(curveCount: 3),
+              progress: _progress,
+              style: const CurvedRoadmapStyle(completedColor: Colors.orange),
+              markers: [
+                for (int i = 1; i <= 5; i++)
+                  RoadmapMarker(
+                    distanceFraction: i / 6,
+                    onTap: () => ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text('Level $i tapped'))),
+                    child: CircleAvatar(
+                      backgroundColor:
+                          (i / 6) <= _progress ? Colors.orange : Colors.grey,
+                      child: Text('$i'),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class AnimatedGradientPage extends StatelessWidget {
+  const AnimatedGradientPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Draw-in animation + gradient')),
+      body: CurvedRoadmap(
+        backgroundColor: Colors.blueGrey.shade50,
+        animate: true,
+        animationDuration: const Duration(seconds: 2),
+        geometry: const RoadmapGeometry(curveCount: 3),
+        style: const CurvedRoadmapStyle(
+          roadWidth: 24,
+          roadGradient: LinearGradient(
+            colors: [Colors.purple, Colors.pink, Colors.orange],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class HorizontalScrollablePage extends StatelessWidget {
+  const HorizontalScrollablePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Horizontal, scrollable')),
+      body: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: CurvedRoadmap(
+          backgroundColor: Colors.green.shade50,
+          geometry: const RoadmapGeometry(
+            orientation: RoadmapOrientation.horizontal,
+            curveCount: 8,
+          ),
+          sizing: const RoadmapSizing.fixedSegmentExtent(260),
+        ),
+      ),
+    );
+  }
+}
+
+class CurveVariantsPage extends StatefulWidget {
+  const CurveVariantsPage({super.key});
+
+  @override
+  State<CurveVariantsPage> createState() => _CurveVariantsPageState();
+}
+
+class _CurveVariantsPageState extends State<CurveVariantsPage> {
+  final Map<String, RoadCurveStyle> _variants = const {
+    'S-curve': SCurveStyle(),
+    'Zigzag': ZigzagCurveStyle(),
+    'Sine': SineCurveStyle(),
+    'Straight': StraightCurveStyle(),
+  };
+  String _selected = 'S-curve';
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Curve style variants')),
+      body: Column(
+        children: [
+          Wrap(
+            spacing: 8,
+            children: _variants.keys
+                .map(
+                  (name) => ChoiceChip(
+                    label: Text(name),
+                    selected: _selected == name,
+                    onSelected: (_) => setState(() => _selected = name),
+                  ),
+                )
+                .toList(),
+          ),
+          Expanded(
+            child: CurvedRoadmap(
+              backgroundColor: Colors.green.shade50,
+              geometry: RoadmapGeometry(
+                curveCount: 3,
+                curveStyle: _variants[_selected]!,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ThemeExtensionPage extends StatelessWidget {
+  const ThemeExtensionPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: Theme.of(context).copyWith(
+        extensions: const [
+          CurvedRoadmapStyle(roadColor: Colors.brown, lineColor: Colors.amber),
+        ],
+      ),
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Theme-extension styling')),
+        // No `style` passed — CurvedRoadmap picks it up from the Theme.
+        body: const CurvedRoadmap(backgroundColor: Colors.green),
+      ),
+    );
+  }
+}
+
+/// Every turn placed by hand — arbitrary cross position and smooth/sharp
+/// per turn, via [WaypointCurveStyle], instead of a uniform preset.
+class WaypointDemoPage extends StatelessWidget {
+  const WaypointDemoPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Full manual control (waypoints)')),
+      body: CurvedRoadmap(
+        backgroundColor: Colors.green.shade50,
+        style: const CurvedRoadmapStyle(roadColor: Colors.indigo),
+        geometry: const RoadmapGeometry(
+          curveStyle: WaypointCurveStyle([
+            RoadWaypoint(cross: 0.15),
+            RoadWaypoint(cross: 0.85),
+            RoadWaypoint(cross: 0.3, turn: RoadTurnType.sharp),
+            RoadWaypoint(cross: 0.9),
+            RoadWaypoint(cross: 0.1, turn: RoadTurnType.sharp),
+            RoadWaypoint(cross: 0.6),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+/// Markers built from [RoadmapMarker.card] — title, notes, and an
+/// image/icon, without hand-building a layout.
+class RichMarkersPage extends StatelessWidget {
+  const RichMarkersPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Rich marker cards')),
+      body: CurvedRoadmap(
+        backgroundColor: Colors.green.shade50,
+        geometry: const RoadmapGeometry(curveCount: 3),
+        markers: [
+          RoadmapMarker.card(
+            distanceFraction: 0.15,
+            title: 'Trailhead',
+            notes: 'Start here',
+            icon: Icons.flag,
+            onTap: () => _showSnack(context, 'Trailhead tapped'),
+          ),
+          RoadmapMarker.card(
+            distanceFraction: 0.45,
+            title: 'Rest stop',
+            notes: 'Great photo spot',
+            image: const Icon(Icons.landscape, color: Colors.white),
+            color: Colors.teal,
+            onTap: () => _showSnack(context, 'Rest stop tapped'),
+          ),
+          RoadmapMarker.card(
+            distanceFraction: 0.8,
+            title: 'Summit',
+            notes: '2,400m — bring water',
+            icon: Icons.terrain,
+            color: Colors.deepOrange,
+            onTap: () => _showSnack(context, 'Summit tapped'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSnack(BuildContext context, String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+/// The road placed at arbitrary positions and lengths — inside a small card,
+/// in a row beside other content, and confined to part of its box via
+/// `alongStart`/`alongEnd`.
+class PlacementPage extends StatelessWidget {
+  const PlacementPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Place anywhere, any length')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          const Text('Inside a small card'),
+          const SizedBox(height: 8),
+          Card(
+            child: SizedBox(
+              height: 180,
+              child: CurvedRoadmap(
+                style: const CurvedRoadmapStyle(
+                  roadWidth: 10,
+                  dashWidth: 8,
+                  dashSpace: 5,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text('Top half only (alongStart 0.5 → alongEnd 0.0)'),
+          const SizedBox(height: 8),
+          Container(
+            height: 240,
+            color: Colors.green.shade50,
+            child: const CurvedRoadmap(
+              geometry: RoadmapGeometry(
+                alongStart: 0.5,
+                alongEnd: 0.0,
+                curveCount: 1,
+              ),
+              style: CurvedRoadmapStyle(roadWidth: 12),
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text('Beside other content, fixed width'),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 220,
+            child: Row(
+              children: [
+                const SizedBox(
+                  width: 120,
+                  child: CurvedRoadmap(
+                    geometry: RoadmapGeometry(curveCount: 3),
+                    style: CurvedRoadmapStyle(roadWidth: 10),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Container(
+                    color: Colors.blueGrey.shade50,
+                    alignment: Alignment.center,
+                    child: const Text('Other content sits here'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text('Many turns still fit exactly (curveCount: 12)'),
+          const SizedBox(height: 8),
+          Container(
+            height: 300,
+            color: Colors.green.shade50,
+            child: const CurvedRoadmap(
+              geometry: RoadmapGeometry(curveCount: 12, curveAmplitude: 0.4),
+              style: CurvedRoadmapStyle(
+                roadWidth: 8,
+                lineStyle: RoadLineStyle.none,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

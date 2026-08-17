@@ -1,0 +1,7 @@
+tags:
+  golden:
+    # Golden images are rendered by a specific Flutter/engine version and
+    # host platform. Run them on the reference platform only:
+    #   flutter test --exclude-tags golden      (other platforms / quick runs)
+    #   flutter test --update-goldens           (after an intended change)
+    skip: false

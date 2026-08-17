@@ -1,0 +1,14 @@
+# Repo-internal docs, not meant for the published package.
+CLAUDE.md
+
+# Golden reference images are for this repo's CI, not for consumers —
+# they are ~300KB of the archive and useless once installed.
+test/goldens/
+
+# Generated build caches (already gitignored, but dart pub publish's
+# gitignore matching has been observed to miss the unanchored `build/`
+# pattern for the package root) - never ship these.
+/build/
+/.dart_tool/
+example/build/
+example/.dart_tool/
