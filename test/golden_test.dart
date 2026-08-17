@@ -231,6 +231,39 @@ void main() {
     );
   });
 
+  testWidgets('captions alternating either side of the road', (tester) async {
+    await tester.pumpWidget(
+      _frame(
+        CurvedRoadmap(
+          style: const CurvedRoadmapStyle(roadWidth: 26),
+          markers: [
+            for (int i = 0; i < 4; i++) ...[
+              RoadmapMarker.pin(
+                distanceFraction: (i + 0.5) / 4,
+                label: '',
+                size: 26,
+              ),
+              RoadmapMarker(
+                distanceFraction: (i + 0.5) / 4,
+                side: RoadSide.alternating,
+                sideOffset: 14,
+                child: Container(
+                  width: 70,
+                  height: 26,
+                  color: const Color(0xFF4A90D9),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+    await expectLater(
+      find.byType(CurvedRoadmap),
+      matchesGoldenFile('goldens/side_captions.png'),
+    );
+  });
+
   testWidgets('markers near the edge stay inside the bounds', (tester) async {
     await tester.pumpWidget(
       _frame(

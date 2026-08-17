@@ -23,6 +23,8 @@ screenshots:
     path: doc/screenshots/serpentine_milestones.png
   - description: A serpentine roadmap with teardrop map pins resting on the path.
     path: doc/screenshots/serpentine_pins.png
+  - description: Captions placed clear of the road, alternating sides down the route.
+    path: doc/screenshots/side_captions.png
 
 environment:
   sdk: '>=3.3.0 <4.0.0'

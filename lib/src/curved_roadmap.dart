@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' show Tangent;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -70,8 +71,11 @@ class CurvedRoadmap extends StatefulWidget {
   final double? progress;
 
   /// When true (the default), marker content that would overhang the
-  /// widget's bounds is shifted back inside. Individual markers can override
-  /// this with [RoadmapMarker.keepInBounds].
+  /// widget's bounds is shifted back inside.
+  ///
+  /// Only applies to markers sitting on the road: clamping a marker placed
+  /// beside the road would pull it back over the tarmac. Individual markers
+  /// can override either way with [RoadmapMarker.keepInBounds].
   final bool keepMarkersInBounds;
 
   /// When true, the road animates drawing itself in.
@@ -209,7 +213,7 @@ class _CurvedRoadmapState extends State<CurvedRoadmap>
                         ),
                       ),
               ),
-              ..._buildMarkers(roadPath),
+              ..._buildMarkers(roadPath, style),
             ],
           ),
         );
@@ -222,16 +226,37 @@ class _CurvedRoadmapState extends State<CurvedRoadmap>
     return road;
   }
 
-  List<Widget> _buildMarkers(RoadPath roadPath) {
+  List<Widget> _buildMarkers(RoadPath roadPath, CurvedRoadmapStyle style) {
     if (widget.markers.isEmpty || roadPath.length <= 0) return const [];
 
     final List<Widget> widgets = [];
-    for (final marker in widget.markers) {
+    for (int index = 0; index < widget.markers.length; index++) {
+      final RoadmapMarker marker = widget.markers[index];
       final double fraction =
           marker.distanceFraction.clamp(0.0, 1.0).toDouble();
       final double distance = fraction * roadPath.length;
-      final Offset? point = roadPath.pointAt(distance);
-      if (point == null) continue;
+      final Tangent? tangent = roadPath.tangentAt(distance);
+      if (tangent == null) continue;
+
+      // Placing content beside the road follows the road's own direction,
+      // so a caption stays square to the tarmac on every stretch instead of
+      // drifting as the path turns.
+      Offset point = tangent.position;
+      Alignment? alignment = marker.anchor;
+      final RoadSide side = _resolveSide(marker.side, index);
+      if (side != RoadSide.on) {
+        final Offset heading = tangent.vector;
+        final Offset normal = side == RoadSide.left
+            ? Offset(heading.dy, -heading.dx)
+            : Offset(-heading.dy, heading.dx);
+        point += normal * (style.roadWidth / 2 + marker.sideOffset);
+        // Face the content's inner edge back towards the road.
+        alignment ??= Alignment(
+          (-normal.dx).clamp(-1.0, 1.0),
+          (-normal.dy).clamp(-1.0, 1.0),
+        );
+      }
+      alignment ??= Alignment.center;
 
       Widget content = marker.child;
       if (marker.onTap != null) {
@@ -268,8 +293,12 @@ class _CurvedRoadmapState extends State<CurvedRoadmap>
           child: CustomSingleChildLayout(
             delegate: _MarkerLayoutDelegate(
               anchor: point + marker.offset,
-              alignment: marker.anchor,
-              keepInside: marker.keepInBounds ?? widget.keepMarkersInBounds,
+              alignment: alignment,
+              // Clamping a side-placed marker back inside the widget would
+              // drag it onto the road it was asked to sit clear of, so it
+              // only applies to markers on the path unless asked for.
+              keepInside: marker.keepInBounds ??
+                  (side == RoadSide.on && widget.keepMarkersInBounds),
             ),
             child: content,
           ),
@@ -279,6 +308,11 @@ class _CurvedRoadmapState extends State<CurvedRoadmap>
     return widgets;
   }
 }
+
+/// Resolves [RoadSide.alternating] against the marker's position in the list.
+RoadSide _resolveSide(RoadSide side, int index) => side == RoadSide.alternating
+    ? (index.isEven ? RoadSide.left : RoadSide.right)
+    : side;
 
 /// Centers a marker on its point of the road, then — when [keepInside] —
 /// shifts it back within the widget's bounds if its measured size would

@@ -8,9 +8,9 @@ draw-in entrance animation.
 |---|---|---|
 | <img src="doc/screenshots/markers_progress.png" width="200"> | <img src="doc/screenshots/marker_cards.png" width="200"> | <img src="doc/screenshots/gradient_animation.png" width="200"> |
 
-| Serpentine milestones | Serpentine with map pins | Hand-placed waypoints |
+| Serpentine milestones | Serpentine with map pins | Captions beside the road |
 |---|---|---|
-| <img src="doc/screenshots/serpentine_milestones.png" width="200"> | <img src="doc/screenshots/serpentine_pins.png" width="200"> | <img src="doc/screenshots/waypoints.png" width="200"> |
+| <img src="doc/screenshots/serpentine_milestones.png" width="200"> | <img src="doc/screenshots/serpentine_pins.png" width="200"> | <img src="doc/screenshots/side_captions.png" width="200"> |
 
 See the [example](example) app for all of these running live, plus horizontal
 scrollable roads, curve style variants, theme-extension styling, and
@@ -188,6 +188,45 @@ CurvedRoadmap(
   ],
 )
 ```
+
+### Nodes on, over or under the road
+
+`side` decides where a marker's content sits relative to the road, and
+`sideOffset` how far clear of the tarmac it sits:
+
+```dart
+CurvedRoadmap(
+  markers: [
+    // The pin sits on the path...
+    RoadmapMarker.pin(distanceFraction: 0.25, label: '01'),
+    // ...and its caption sits clear of it, swapping sides down the road.
+    RoadmapMarker(
+      distanceFraction: 0.25,
+      side: RoadSide.alternating, // or .left / .right / .on
+      sideOffset: 24,             // gap from the road's edge, not its centre
+      child: const MyCaption(),
+    ),
+  ],
+)
+```
+
+| `RoadSide` | Where the content goes |
+|---|---|
+| `on` | Straddling the path (the default) |
+| `left` / `right` | Clear of the road, relative to its direction of travel |
+| `alternating` | Swaps side by list position — even index left, odd right |
+
+Sides follow the **road**, not the screen: `left` stays on the same side of
+the tarmac whether that stretch runs up, down or across, because placement
+is computed from the road's tangent at that point. `sideOffset` is measured
+from the road's edge, so it stays a true clearance when `roadWidth` changes.
+
+Side-placed markers are not clamped back inside the widget — pulling them in
+would drag them onto the road they were asked to sit clear of. Give the
+widget enough room, or set `keepInBounds: true` on the marker to override.
+
+For finer control, `anchor` picks which point of the marker meets its
+placement point; it defaults to facing the content's inner edge at the road.
 
 `RoadmapMarker.milestone` puts a ringed circle on the road with its caption
 hanging beneath; `RoadmapMarker.pin` drops a teardrop map pin whose tip rests

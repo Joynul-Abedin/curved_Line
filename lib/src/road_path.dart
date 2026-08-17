@@ -57,17 +57,24 @@ class RoadPath {
       this.size == size && this.geometry == geometry;
 
   /// The point at [distance] along the road, or null if the road is empty.
-  Offset? pointAt(double distance) {
+  Offset? pointAt(double distance) => tangentAt(distance)?.position;
+
+  /// The position *and direction* of the road at [distance].
+  ///
+  /// The direction is what lets callers place content square to the road —
+  /// a caption beside a run, a pin standing off the kerb — instead of
+  /// guessing a fixed screen offset that only looks right on one stretch.
+  ui.Tangent? tangentAt(double distance) {
     double base = 0.0;
     for (final metric in _metrics) {
       if (distance <= base + metric.length) {
-        return metric.getTangentForOffset(distance - base)?.position;
+        return metric.getTangentForOffset(distance - base);
       }
       base += metric.length;
     }
     if (_metrics.isEmpty) return null;
     final ui.PathMetric last = _metrics.last;
-    return last.getTangentForOffset(last.length)?.position;
+    return last.getTangentForOffset(last.length);
   }
 
   /// A sub-path covering arc length [from]..[to] along the whole road.

@@ -2,6 +2,27 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+/// Which side of the road a marker's content sits on.
+///
+/// Sides are relative to the road's own direction of travel, not the screen,
+/// so "left" stays on the same side of the tarmac whether that stretch runs
+/// up, down, or across the widget.
+enum RoadSide {
+  /// Straddling the road, centred on the path (the default).
+  on,
+
+  /// Clear of the road, on its left as the road travels.
+  left,
+
+  /// Clear of the road, on its right as the road travels.
+  right,
+
+  /// Alternating left/right by the marker's position in the list — the
+  /// zig-zag captioning used by most printed roadmap infographics. Markers
+  /// at even indices go left, odd go right.
+  alternating,
+}
+
 /// A widget placed at a fixed point along a [CurvedRoadmap]'s path — a level
 /// icon, avatar, image, or label in a skill-tree style layout.
 ///
@@ -18,7 +39,9 @@ class RoadmapMarker {
     this.keepInBounds,
     this.semanticLabel,
     this.excludeChildSemantics = false,
-    this.anchor = Alignment.center,
+    this.anchor,
+    this.side = RoadSide.on,
+    this.sideOffset = 12.0,
   }) : assert(
           distanceFraction >= 0.0 && distanceFraction <= 1.0,
           'distanceFraction must be within 0.0-1.0',
@@ -41,12 +64,16 @@ class RoadmapMarker {
     bool? keepInBounds,
     String? semanticLabel,
     double maxWidth = 220,
+    RoadSide side = RoadSide.on,
+    double sideOffset = 12.0,
   }) {
     return RoadmapMarker(
       distanceFraction: distanceFraction,
       onTap: onTap,
       offset: offset,
       keepInBounds: keepInBounds,
+      side: side,
+      sideOffset: sideOffset,
       semanticLabel: semanticLabel ??
           [title, notes].whereType<String>().join(', ').ifEmpty(null),
       child: _RoadmapMarkerCard(
@@ -76,11 +103,15 @@ class RoadmapMarker {
     VoidCallback? onTap,
     String? semanticLabel,
     Offset offset = Offset.zero,
+    RoadSide side = RoadSide.on,
+    double sideOffset = 12.0,
   }) {
     return RoadmapMarker(
       distanceFraction: distanceFraction,
       onTap: onTap,
       offset: offset,
+      side: side,
+      sideOffset: sideOffset,
       // The caption deliberately overflows the circle's box.
       keepInBounds: false,
       semanticLabel: semanticLabel ??
@@ -146,11 +177,23 @@ class RoadmapMarker {
   /// otherwise be announced twice.
   final bool excludeChildSemantics;
 
-  /// Which point of the marker sits on the road. Defaults to
-  /// [Alignment.center]; [Alignment.bottomCenter] makes the marker stand
-  /// above the road on its bottom edge, which is what a map pin wants so
-  /// its tip lands on the path.
-  final Alignment anchor;
+  /// Which point of the marker sits on its anchor point. When null (the
+  /// default) it is [Alignment.center] for [RoadSide.on] markers, and for
+  /// side-placed markers it is derived from the road's direction so the
+  /// content's inner edge faces the tarmac.
+  ///
+  /// [Alignment.bottomCenter] makes a marker stand on its bottom edge,
+  /// which is what a map pin wants so its tip lands on the path.
+  final Alignment? anchor;
+
+  /// Which side of the road this marker's content sits on. Defaults to
+  /// [RoadSide.on] — straddling the path.
+  final RoadSide side;
+
+  /// Gap between the edge of the road and the marker, in logical pixels,
+  /// when [side] is not [RoadSide.on]. Measured from the road's edge, so it
+  /// stays a true clearance as the road's width changes.
+  final double sideOffset;
 }
 
 extension on String {

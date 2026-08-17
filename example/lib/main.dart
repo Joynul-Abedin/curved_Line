@@ -35,6 +35,7 @@ class HomePage extends StatelessWidget {
       'Place anywhere, any length': (_) => const PlacementPage(),
       'Serpentine infographic (numbered)': (_) => const SerpentinePage(),
       'Serpentine with map pins': (_) => const SerpentinePinsPage(),
+      'Captions beside the road': (_) => const SideCaptionsPage(),
     };
 
     return Scaffold(
@@ -521,13 +522,131 @@ class SerpentinePinsPage extends StatelessWidget {
                   label: '0${i + 1}',
                   color: _colors[i],
                   size: 46,
-                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Step 0${i + 1}')),
-                  ),
+                  onTap: () => ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Step 0${i + 1}'))),
                 ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Captions placed clear of the road, alternating sides — the layout most
+/// slide-deck roadmap templates use. `RoadSide` follows the road's own
+/// direction, so the captions stay square to the tarmac as it winds.
+class SideCaptionsPage extends StatefulWidget {
+  const SideCaptionsPage({super.key});
+
+  @override
+  State<SideCaptionsPage> createState() => _SideCaptionsPageState();
+}
+
+class _SideCaptionsPageState extends State<SideCaptionsPage> {
+  RoadSide _side = RoadSide.alternating;
+
+  static const _steps = <(String, String)>[
+    ('2017', 'Kicked the project off'),
+    ('2018', 'Shipped the first release'),
+    ('2019', 'Grew the team'),
+    ('2020', 'Went international'),
+  ];
+
+  static const _colors = <Color>[
+    Color(0xFF00897B),
+    Color(0xFFF5A623),
+    Color(0xFF7ED321),
+    Color(0xFF4A90D9),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Captions beside the road')),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Wrap(
+              spacing: 8,
+              children: RoadSide.values
+                  .map(
+                    (side) => ChoiceChip(
+                      label: Text(side.name),
+                      selected: _side == side,
+                      onSelected: (_) => setState(() => _side = side),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+          Expanded(
+            child: CurvedRoadmap(
+              backgroundColor: Colors.white,
+              geometry: const RoadmapGeometry(curveCount: 2),
+              style: const CurvedRoadmapStyle(
+                roadColor: Color(0xFF4A4A4A),
+                roadWidth: 34,
+                lineColor: Colors.white,
+                dashWidth: 14,
+                dashSpace: 12,
+              ),
+              markers: [
+                for (int i = 0; i < _steps.length; i++) ...[
+                  RoadmapMarker.pin(
+                    distanceFraction: (i + 0.5) / _steps.length,
+                    label: '',
+                    color: _colors[i],
+                    size: 34,
+                  ),
+                  RoadmapMarker(
+                    distanceFraction: (i + 0.5) / _steps.length,
+                    side: _side,
+                    sideOffset: 26,
+                    semanticLabel: '${_steps[i].$1}. ${_steps[i].$2}',
+                    child: _Caption(
+                      year: _steps[i].$1,
+                      text: _steps[i].$2,
+                      color: _colors[i],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Caption extends StatelessWidget {
+  const _Caption({required this.year, required this.text, required this.color});
+
+  final String year;
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 140,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            year,
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(color: Colors.black87),
+          ),
+          Container(height: 3, width: 60, color: color),
+          const SizedBox(height: 6),
+          Text(text, style: Theme.of(context).textTheme.bodySmall),
+        ],
       ),
     );
   }

@@ -402,8 +402,10 @@ void main() {
     test('full-range extract returns the path itself, not a copy', () {
       // The no-progress, no-animation case repaints often; copying every
       // segment each time was pure waste.
-      final road =
-          RoadPath.build(const Size(300, 600), const RoadmapGeometry());
+      final road = RoadPath.build(
+        const Size(300, 600),
+        const RoadmapGeometry(),
+      );
       expect(identical(road.extract(0, road.length), road.path), isTrue);
       expect(identical(road.extract(0, road.length / 2), road.path), isFalse);
     });
@@ -606,6 +608,154 @@ void main() {
       expect(find.text('Level 1'), findsOneWidget);
       expect(find.text('Complete the basics'), findsOneWidget);
       expect(find.byIcon(Icons.flag), findsOneWidget);
+    });
+  });
+
+  group('side placement', () {
+    // A straight vertical road: travel is bottom-to-top, so "left" of the
+    // road is screen-left and the maths is checkable by hand.
+    const straight = RoadmapGeometry(curveStyle: StraightCurveStyle());
+
+    Future<Rect> rectFor(WidgetTester tester, RoadmapMarker marker) async {
+      await tester.pumpWidget(
+        _sized(
+          CurvedRoadmap(
+            geometry: straight,
+            style: const CurvedRoadmapStyle(roadWidth: 40),
+            markers: [marker],
+          ),
+        ),
+      );
+      return tester.getRect(find.byKey(const Key('m')));
+    }
+
+    testWidgets('RoadSide.on centres the marker on the path', (tester) async {
+      final rect = await rectFor(
+        tester,
+        const RoadmapMarker(
+          distanceFraction: 0.5,
+          child: SizedBox(key: Key('m'), width: 30, height: 30),
+        ),
+      );
+      final Rect road = tester.getRect(find.byType(CurvedRoadmap));
+      expect(rect.center.dx, closeTo(road.center.dx, 0.5));
+    });
+
+    testWidgets('left and right sit on opposite sides, clear of the road', (
+      tester,
+    ) async {
+      final left = await rectFor(
+        tester,
+        const RoadmapMarker(
+          distanceFraction: 0.5,
+          side: RoadSide.left,
+          sideOffset: 10,
+          child: SizedBox(key: Key('m'), width: 30, height: 30),
+        ),
+      );
+      final right = await rectFor(
+        tester,
+        const RoadmapMarker(
+          distanceFraction: 0.5,
+          side: RoadSide.right,
+          sideOffset: 10,
+          child: SizedBox(key: Key('m'), width: 30, height: 30),
+        ),
+      );
+      final Rect road = tester.getRect(find.byType(CurvedRoadmap));
+
+      expect(left.right, lessThan(road.center.dx));
+      expect(right.left, greaterThan(road.center.dx));
+      // Clearance is measured from the road's edge: half of roadWidth 40,
+      // plus the 10px gap.
+      expect(road.center.dx - left.right, closeTo(30, 1.0));
+      expect(right.left - road.center.dx, closeTo(30, 1.0));
+    });
+
+    testWidgets('alternating flips side by list position', (tester) async {
+      await tester.pumpWidget(
+        _sized(
+          const CurvedRoadmap(
+            geometry: straight,
+            markers: [
+              RoadmapMarker(
+                distanceFraction: 0.3,
+                side: RoadSide.alternating,
+                child: SizedBox(key: Key('a'), width: 30, height: 30),
+              ),
+              RoadmapMarker(
+                distanceFraction: 0.6,
+                side: RoadSide.alternating,
+                child: SizedBox(key: Key('b'), width: 30, height: 30),
+              ),
+            ],
+          ),
+        ),
+      );
+      final Rect road = tester.getRect(find.byType(CurvedRoadmap));
+      expect(
+        tester.getRect(find.byKey(const Key('a'))).center.dx,
+        lessThan(road.center.dx),
+      );
+      expect(
+        tester.getRect(find.byKey(const Key('b'))).center.dx,
+        greaterThan(road.center.dx),
+      );
+    });
+
+    testWidgets('side-placed markers are not clamped back onto the road', (
+      tester,
+    ) async {
+      // Regression: bounds clamping used to drag a caption near the edge
+      // back over the tarmac it was explicitly placed clear of.
+      await tester.pumpWidget(
+        _sized(
+          const CurvedRoadmap(
+            geometry: straight,
+            style: CurvedRoadmapStyle(roadWidth: 40),
+            markers: [
+              RoadmapMarker(
+                distanceFraction: 0.5,
+                side: RoadSide.left,
+                sideOffset: 10,
+                child: SizedBox(key: Key('m'), width: 260, height: 30),
+              ),
+            ],
+          ),
+        ),
+      );
+      final Rect road = tester.getRect(find.byType(CurvedRoadmap));
+      final Rect marker = tester.getRect(find.byKey(const Key('m')));
+      // Wider than the space beside the road, so it must overhang the
+      // widget rather than ride back over the centre line.
+      expect(marker.right, lessThanOrEqualTo(road.center.dx - 19));
+      expect(marker.left, lessThan(road.left));
+    });
+
+    testWidgets('sides follow the road, not the screen', (tester) async {
+      // The same RoadSide.left on a horizontal road must place content
+      // above/below rather than left/right.
+      await tester.pumpWidget(
+        _sized(
+          const CurvedRoadmap(
+            geometry: RoadmapGeometry(
+              curveStyle: StraightCurveStyle(),
+              orientation: RoadmapOrientation.horizontal,
+            ),
+            markers: [
+              RoadmapMarker(
+                distanceFraction: 0.5,
+                side: RoadSide.left,
+                child: SizedBox(key: Key('m'), width: 30, height: 30),
+              ),
+            ],
+          ),
+        ),
+      );
+      final Rect road = tester.getRect(find.byType(CurvedRoadmap));
+      final Rect marker = tester.getRect(find.byKey(const Key('m')));
+      expect(marker.center.dy, isNot(closeTo(road.center.dy, 1.0)));
+      expect(marker.center.dx, closeTo(road.center.dx, 1.0));
     });
   });
 

@@ -18,6 +18,11 @@ Initial release.
   turns flattening to ellipses rather than swallowing the runs on a narrow
   box.
 - `CurvedRoadmapStyle.borderColor`/`borderWidth` draw a casing under the road.
+- Node placement: `RoadmapMarker.side` (`on`/`left`/`right`/`alternating`)
+  and `sideOffset` put content clear of the road. Sides are computed from the
+  road's tangent, so they follow the tarmac rather than the screen, and the
+  clearance is measured from the road's edge. `RoadPath.tangentAt` exposes the
+  same direction information for custom placement.
 - `RoadmapMarker.milestone` (ringed circle with a caption beneath) and
   `RoadmapMarker.pin` (teardrop pin standing on its tip), plus
   `RoadmapMarker.anchor` to choose which point of any marker sits on the road.
