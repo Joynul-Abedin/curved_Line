@@ -47,6 +47,18 @@ class CurvedRoadmapPainter extends CustomPainter {
     final double? progressLength =
         progress == null ? null : total * _clamp(progress!, 0.0, 1.0);
 
+    // Casing first, so the road sits on top of it like tarmac on a kerb.
+    if (style.borderColor != null && style.borderWidth > 0) {
+      canvas.drawPath(
+        roadPath.extract(0, revealLength),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = style.roadWidth + style.borderWidth * 2
+          ..strokeCap = StrokeCap.round
+          ..color = style.borderColor!,
+      );
+    }
+
     final Paint roadPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = style.roadWidth

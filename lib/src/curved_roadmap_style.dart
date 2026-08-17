@@ -44,6 +44,8 @@ class CurvedRoadmapStyle extends ThemeExtension<CurvedRoadmapStyle> {
     this.dashWidth = 20.0,
     this.dashSpace = 10.0,
     this.completedColor,
+    this.borderColor,
+    this.borderWidth = 4.0,
   })  : assert(roadWidth > 0, 'roadWidth must be positive'),
         assert(dashWidth > 0, 'dashWidth must be positive'),
         assert(dashSpace >= 0, 'dashSpace cannot be negative');
@@ -75,6 +77,15 @@ class CurvedRoadmapStyle extends ThemeExtension<CurvedRoadmapStyle> {
   /// Falls back to the ambient [ColorScheme.primary].
   final Color? completedColor;
 
+  /// Draws a casing (kerb/shoulder) underneath the road in this color, the
+  /// way printed roadmap infographics outline the tarmac. Null (the
+  /// default) draws no casing.
+  final Color? borderColor;
+
+  /// How far the casing extends beyond each side of the road, in logical
+  /// pixels. Only used when [borderColor] is set.
+  final double borderWidth;
+
   @override
   CurvedRoadmapStyle copyWith({
     Color? roadColor,
@@ -85,6 +96,8 @@ class CurvedRoadmapStyle extends ThemeExtension<CurvedRoadmapStyle> {
     double? dashWidth,
     double? dashSpace,
     Object? completedColor = _unset,
+    Object? borderColor = _unset,
+    double? borderWidth,
   }) {
     return CurvedRoadmapStyle(
       roadColor: roadColor ?? this.roadColor,
@@ -99,6 +112,10 @@ class CurvedRoadmapStyle extends ThemeExtension<CurvedRoadmapStyle> {
       completedColor: identical(completedColor, _unset)
           ? this.completedColor
           : completedColor as Color?,
+      borderColor: identical(borderColor, _unset)
+          ? this.borderColor
+          : borderColor as Color?,
+      borderWidth: borderWidth ?? this.borderWidth,
     );
   }
 
@@ -115,6 +132,8 @@ class CurvedRoadmapStyle extends ThemeExtension<CurvedRoadmapStyle> {
       dashWidth: dashWidth + (other.dashWidth - dashWidth) * t,
       dashSpace: dashSpace + (other.dashSpace - dashSpace) * t,
       completedColor: Color.lerp(completedColor, other.completedColor, t),
+      borderColor: Color.lerp(borderColor, other.borderColor, t),
+      borderWidth: borderWidth + (other.borderWidth - borderWidth) * t,
     );
   }
 
@@ -129,7 +148,9 @@ class CurvedRoadmapStyle extends ThemeExtension<CurvedRoadmapStyle> {
           other.lineStyle == lineStyle &&
           other.dashWidth == dashWidth &&
           other.dashSpace == dashSpace &&
-          other.completedColor == completedColor);
+          other.completedColor == completedColor &&
+          other.borderColor == borderColor &&
+          other.borderWidth == borderWidth);
 
   @override
   int get hashCode => Object.hash(

@@ -12,14 +12,22 @@ Initial release.
 - Full manual shape control: `WaypointCurveStyle` places every turn
   individually (position, swing, smooth or sharp), and `CustomCurveStyle`
   hands over raw `Path` construction.
-- Preset shapes: S-curve (default), zigzag, sine, straight.
+- Preset shapes: S-curve (default), serpentine, zigzag, sine, straight.
+  `SerpentineCurveStyle` lays out the classic printed-roadmap infographic —
+  straight runs joined by U-turns, one row of milestones per run — with the
+  turns flattening to ellipses rather than swallowing the runs on a narrow
+  box.
+- `CurvedRoadmapStyle.borderColor`/`borderWidth` draw a casing under the road.
+- `RoadmapMarker.milestone` (ringed circle with a caption beneath) and
+  `RoadmapMarker.pin` (teardrop pin standing on its tip), plus
+  `RoadmapMarker.anchor` to choose which point of any marker sits on the road.
 - Markers: any widget along the path, plus a `RoadmapMarker.card` factory for
   title/notes/image content. Markers support tap callbacks, pixel `offset`,
   and are kept inside the widget's bounds by default.
 - Progress fill (completed vs. remaining), path draw-in animation, and
   gradient strokes (which compose with progress fill).
 - Scrollable roadmaps longer than one screen via
-  `RoadSizingMode.fixedSegmentExtent`.
+  `RoadmapSizing.fixedSegmentExtent`.
 - Theming through `ThemeExtension<CurvedRoadmapStyle>` — paint only, so a
   theme never carries layout or progress state.
 - Accessibility: markers take a `semanticLabel` and are exposed as buttons

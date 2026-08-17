@@ -268,6 +268,7 @@ class _CurvedRoadmapState extends State<CurvedRoadmap>
           child: CustomSingleChildLayout(
             delegate: _MarkerLayoutDelegate(
               anchor: point + marker.offset,
+              alignment: marker.anchor,
               keepInside: marker.keepInBounds ?? widget.keepMarkersInBounds,
             ),
             child: content,
@@ -284,9 +285,14 @@ class _CurvedRoadmapState extends State<CurvedRoadmap>
 /// overhang an edge. Because the child is really measured, arbitrarily wide
 /// content flips inward instead of overflowing.
 class _MarkerLayoutDelegate extends SingleChildLayoutDelegate {
-  const _MarkerLayoutDelegate({required this.anchor, required this.keepInside});
+  const _MarkerLayoutDelegate({
+    required this.anchor,
+    required this.alignment,
+    required this.keepInside,
+  });
 
   final Offset anchor;
+  final Alignment alignment;
   final bool keepInside;
 
   @override
@@ -295,8 +301,10 @@ class _MarkerLayoutDelegate extends SingleChildLayoutDelegate {
 
   @override
   Offset getPositionForChild(Size size, Size childSize) {
-    double dx = anchor.dx - childSize.width / 2;
-    double dy = anchor.dy - childSize.height / 2;
+    // Place the child so that `alignment`'s point within it lands on the
+    // road, rather than always its centre.
+    double dx = anchor.dx - childSize.width * (alignment.x + 1) / 2;
+    double dy = anchor.dy - childSize.height * (alignment.y + 1) / 2;
     if (keepInside) {
       dx = dx.clamp(0.0, math.max(0.0, size.width - childSize.width));
       dy = dy.clamp(0.0, math.max(0.0, size.height - childSize.height));
@@ -306,5 +314,7 @@ class _MarkerLayoutDelegate extends SingleChildLayoutDelegate {
 
   @override
   bool shouldRelayout(_MarkerLayoutDelegate oldDelegate) =>
-      oldDelegate.anchor != anchor || oldDelegate.keepInside != keepInside;
+      oldDelegate.anchor != anchor ||
+      oldDelegate.alignment != alignment ||
+      oldDelegate.keepInside != keepInside;
 }

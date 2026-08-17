@@ -33,6 +33,8 @@ class HomePage extends StatelessWidget {
       'Full manual control (waypoints)': (_) => const WaypointDemoPage(),
       'Rich marker cards (image/title/notes)': (_) => const RichMarkersPage(),
       'Place anywhere, any length': (_) => const PlacementPage(),
+      'Serpentine infographic (numbered)': (_) => const SerpentinePage(),
+      'Serpentine with map pins': (_) => const SerpentinePinsPage(),
     };
 
     return Scaffold(
@@ -389,6 +391,143 @@ class PlacementPage extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The printed-infographic layout: a serpentine road with numbered
+/// milestones and captions, START/FINISH end caps.
+class SerpentinePage extends StatelessWidget {
+  const SerpentinePage({super.key});
+
+  static const _steps = <String, String>{
+    '1': 'Discovery',
+    '2': 'Design',
+    '3': 'Build',
+    '4': 'Test',
+    '5': 'Beta',
+    '6': 'Launch',
+  };
+
+  static const _colors = <Color>[
+    Color(0xFF8BC34A),
+    Color(0xFF4DB6AC),
+    Color(0xFF4FC3F7),
+    Color(0xFF5C6BC0),
+    Color(0xFF7E57C2),
+    Color(0xFFEC407A),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = _steps.entries.toList();
+    return Scaffold(
+      appBar: AppBar(title: const Text('Serpentine infographic')),
+      // This layout is inherently wide — the same as the printed
+      // infographics it mimics — so give it room and let it scroll.
+      body: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SizedBox(
+          width: 1150,
+          child: CurvedRoadmap(
+            backgroundColor: const Color(0xFFFAFAFA),
+            geometry: const RoadmapGeometry(
+              curveStyle: SerpentineCurveStyle(rows: 3),
+              curveAmplitude: 0.44,
+            ),
+            style: const CurvedRoadmapStyle(
+              roadColor: Color(0xFF2E2E2E),
+              roadWidth: 26,
+              borderColor: Color(0xFFBDBDBD),
+              borderWidth: 3,
+              dashWidth: 16,
+              dashSpace: 12,
+            ),
+            markers: [
+              RoadmapMarker.milestone(
+                distanceFraction: 0,
+                label: 'START',
+                color: const Color(0xFF8BC34A),
+                diameter: 104,
+              ),
+              for (int i = 0; i < entries.length; i++)
+                RoadmapMarker.milestone(
+                  distanceFraction: (i + 1) / (entries.length + 1),
+                  label: entries[i].key,
+                  title: entries[i].value.toUpperCase(),
+                  body: 'Lorem ipsum dolor sit amet, consectetuer '
+                      'adipiscing elit, sed diam nonummy.',
+                  color: _colors[i % _colors.length],
+                  captionWidth: 170,
+                ),
+              RoadmapMarker.milestone(
+                distanceFraction: 1,
+                label: 'FINISH',
+                color: const Color(0xFFE53935),
+                diameter: 104,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The slide-deck layout: the same serpentine road, with teardrop map pins
+/// whose tips rest on the path.
+class SerpentinePinsPage extends StatelessWidget {
+  const SerpentinePinsPage({super.key});
+
+  static const _colors = <Color>[
+    Color(0xFFFFC107),
+    Color(0xFFE53935),
+    Color(0xFF8E24AA),
+    Color(0xFF1E88E5),
+    Color(0xFFFDD835),
+    Color(0xFF00897B),
+    Color(0xFF7CB342),
+    Color(0xFF37474F),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Serpentine with map pins')),
+      body: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SizedBox(
+          width: 1000,
+          child: CurvedRoadmap(
+            backgroundColor: Colors.white,
+            geometry: const RoadmapGeometry(
+              curveStyle: SerpentineCurveStyle(rows: 4),
+              curveAmplitude: 0.42,
+            ),
+            style: const CurvedRoadmapStyle(
+              roadColor: Color(0xFF757575),
+              roadWidth: 30,
+              borderColor: Color(0xFFD6D6D6),
+              borderWidth: 8,
+              lineColor: Colors.white,
+              dashWidth: 14,
+              dashSpace: 10,
+            ),
+            markers: [
+              for (int i = 0; i < 8; i++)
+                RoadmapMarker.pin(
+                  distanceFraction: (i + 0.5) / 8,
+                  label: '0${i + 1}',
+                  color: _colors[i],
+                  size: 46,
+                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Step 0${i + 1}')),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

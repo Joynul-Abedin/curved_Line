@@ -4,9 +4,13 @@ A configurable Flutter widget for drawing a curved, winding "roadmap"/journey
 path — with optional milestones, progress fill, gradient strokes, and a
 draw-in entrance animation.
 
-| Markers + progress | Marker cards | Gradient + animation | Waypoints |
-|---|---|---|---|
-| <img src="doc/screenshots/markers_progress.png" width="180"> | <img src="doc/screenshots/marker_cards.png" width="180"> | <img src="doc/screenshots/gradient_animation.png" width="180"> | <img src="doc/screenshots/waypoints.png" width="180"> |
+| Markers + progress | Marker cards | Gradient + animation |
+|---|---|---|
+| <img src="doc/screenshots/markers_progress.png" width="200"> | <img src="doc/screenshots/marker_cards.png" width="200"> | <img src="doc/screenshots/gradient_animation.png" width="200"> |
+
+| Serpentine milestones | Serpentine with map pins | Hand-placed waypoints |
+|---|---|---|
+| <img src="doc/screenshots/serpentine_milestones.png" width="200"> | <img src="doc/screenshots/serpentine_pins.png" width="200"> | <img src="doc/screenshots/waypoints.png" width="200"> |
 
 See the [example](example) app for all of these running live, plus horizontal
 scrollable roads, curve style variants, theme-extension styling, and
@@ -142,13 +146,57 @@ CurvedRoadmap(
 ## Curve style variants
 
 `curveStyle` swaps the road's shape entirely — `SCurveStyle` (default),
-`ZigzagCurveStyle`, `SineCurveStyle`, or `StraightCurveStyle`:
+`SerpentineCurveStyle`, `ZigzagCurveStyle`, `SineCurveStyle`, or
+`StraightCurveStyle`:
 
 ```dart
 CurvedRoadmap(
   geometry: const RoadmapGeometry(curveStyle: SineCurveStyle()),
 )
 ```
+
+## Infographic roadmaps
+
+`SerpentineCurveStyle` is the classic printed-roadmap layout: straight runs
+joined by U-turns at alternating ends, one row of milestones per run.
+
+```dart
+CurvedRoadmap(
+  geometry: const RoadmapGeometry(
+    curveStyle: SerpentineCurveStyle(rows: 3),
+    curveAmplitude: 0.44,
+  ),
+  style: const CurvedRoadmapStyle(
+    roadColor: Color(0xFF2E2E2E),
+    roadWidth: 26,
+    borderColor: Color(0xFFBDBDBD), // kerb/casing under the tarmac
+    borderWidth: 3,
+  ),
+  markers: [
+    RoadmapMarker.milestone(
+      distanceFraction: 0,
+      label: 'START',
+      diameter: 104,
+    ),
+    RoadmapMarker.milestone(
+      distanceFraction: 0.25,
+      label: '1',
+      title: 'DISCOVERY',
+      body: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit.',
+      color: Colors.teal,
+    ),
+  ],
+)
+```
+
+`RoadmapMarker.milestone` puts a ringed circle on the road with its caption
+hanging beneath; `RoadmapMarker.pin` drops a teardrop map pin whose tip rests
+on the path (it anchors on its tip rather than its centre — see
+`RoadmapMarker.anchor` if you need that for your own markers).
+
+The turns are semicircles when there's room and flatten into ellipses when
+there isn't, so the runs never collapse on a narrow box. This layout wants
+width: give it a wide box, or scroll it horizontally, as the example does.
 
 ## Full manual control over the curves
 

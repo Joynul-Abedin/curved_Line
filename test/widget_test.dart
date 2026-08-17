@@ -266,6 +266,68 @@ void main() {
     });
   });
 
+  group('SerpentineCurveStyle', () {
+    test('keeps straight runs even when the canvas is narrow', () {
+      // Regression: deriving the U-turn radius purely from the row gap let
+      // the turns consume the whole width, collapsing every run to a point
+      // and leaving just a stack of semicircles.
+      const size = Size(300, 600);
+      const geometry = RoadmapGeometry(
+        curveStyle: SerpentineCurveStyle(rows: 3),
+        curveAmplitude: 0.42,
+      );
+      final road = RoadPath.build(size, geometry);
+
+      // Sample the run nearest the start and measure how far it travels
+      // across the road.
+      final double runY = geometry.alongStart * size.height;
+      double minX = double.infinity;
+      double maxX = double.negativeInfinity;
+      for (int i = 0; i <= 2000; i++) {
+        final point = road.pointAt(i / 2000 * road.length)!;
+        if ((point.dy - runY).abs() < 2) {
+          minX = math.min(minX, point.dx);
+          maxX = math.max(maxX, point.dx);
+        }
+      }
+      expect(maxX - minX, greaterThan(size.width * 0.25));
+    });
+
+    test('stays inside the canvas for any row count', () {
+      for (final rows in [1, 2, 3, 6, 10]) {
+        final bounds = RoadPath.build(
+          const Size(300, 600),
+          RoadmapGeometry(curveStyle: SerpentineCurveStyle(rows: rows)),
+        ).path.getBounds();
+        expect(bounds.left, greaterThanOrEqualTo(-1), reason: 'rows=$rows');
+        expect(bounds.right, lessThanOrEqualTo(301), reason: 'rows=$rows');
+        expect(bounds.top, greaterThanOrEqualTo(-1), reason: 'rows=$rows');
+        expect(bounds.bottom, lessThanOrEqualTo(601), reason: 'rows=$rows');
+      }
+    });
+
+    test('segmentCount follows the row count', () {
+      expect(
+        const RoadmapGeometry(
+          curveStyle: SerpentineCurveStyle(rows: 5),
+        ).segmentCount,
+        5,
+      );
+    });
+
+    test('runs alternate direction', () {
+      const size = Size(600, 600);
+      const geometry = RoadmapGeometry(
+        curveStyle: SerpentineCurveStyle(rows: 2),
+      );
+      final road = RoadPath.build(size, geometry);
+      // First run travels one way across the road, the next comes back.
+      final start = road.pointAt(0)!;
+      final end = road.pointAt(road.length)!;
+      expect((start.dx - end.dx).abs(), lessThan(size.width * 0.1));
+    });
+  });
+
   group('CustomCurveStyle', () {
     test('delegates entirely to the provided builder', () {
       final custom = CustomCurveStyle(

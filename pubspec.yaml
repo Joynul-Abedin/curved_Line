@@ -19,6 +19,10 @@ screenshots:
     path: doc/screenshots/gradient_animation.png
   - description: A road shaped by hand-placed waypoints mixing smooth and sharp turns.
     path: doc/screenshots/waypoints.png
+  - description: A serpentine infographic roadmap with numbered milestones and captions.
+    path: doc/screenshots/serpentine_milestones.png
+  - description: A serpentine roadmap with teardrop map pins resting on the path.
+    path: doc/screenshots/serpentine_pins.png
 
 environment:
   sdk: '>=3.3.0 <4.0.0'

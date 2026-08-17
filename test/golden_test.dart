@@ -170,6 +170,67 @@ void main() {
     );
   });
 
+  testWidgets('serpentine road with numbered milestones', (tester) async {
+    await tester.pumpWidget(
+      _frame(
+        CurvedRoadmap(
+          geometry: const RoadmapGeometry(
+            curveStyle: SerpentineCurveStyle(rows: 3),
+            curveAmplitude: 0.42,
+          ),
+          style: const CurvedRoadmapStyle(
+            roadColor: Color(0xFF2E2E2E),
+            roadWidth: 22,
+            borderColor: Color(0xFFBDBDBD),
+            borderWidth: 3,
+          ),
+          markers: [
+            RoadmapMarker.milestone(distanceFraction: 0, label: 'S'),
+            RoadmapMarker.milestone(
+              distanceFraction: 0.5,
+              label: '1',
+              title: 'DESIGN',
+            ),
+            RoadmapMarker.milestone(distanceFraction: 1, label: 'F'),
+          ],
+        ),
+      ),
+    );
+    await expectLater(
+      find.byType(CurvedRoadmap),
+      matchesGoldenFile('goldens/serpentine_milestones.png'),
+    );
+  });
+
+  testWidgets('serpentine road with map pins', (tester) async {
+    await tester.pumpWidget(
+      _frame(
+        CurvedRoadmap(
+          geometry: const RoadmapGeometry(
+            curveStyle: SerpentineCurveStyle(rows: 4),
+          ),
+          style: const CurvedRoadmapStyle(
+            roadColor: Color(0xFF757575),
+            roadWidth: 26,
+            borderColor: Color(0xFFD6D6D6),
+            borderWidth: 7,
+          ),
+          markers: [
+            for (int i = 0; i < 6; i++)
+              RoadmapMarker.pin(
+                distanceFraction: (i + 0.5) / 6,
+                label: '0${i + 1}',
+              ),
+          ],
+        ),
+      ),
+    );
+    await expectLater(
+      find.byType(CurvedRoadmap),
+      matchesGoldenFile('goldens/serpentine_pins.png'),
+    );
+  });
+
   testWidgets('markers near the edge stay inside the bounds', (tester) async {
     await tester.pumpWidget(
       _frame(

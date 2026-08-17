@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 /// A widget placed at a fixed point along a [CurvedRoadmap]'s path — a level
@@ -16,6 +18,7 @@ class RoadmapMarker {
     this.keepInBounds,
     this.semanticLabel,
     this.excludeChildSemantics = false,
+    this.anchor = Alignment.center,
   }) : assert(
           distanceFraction >= 0.0 && distanceFraction <= 1.0,
           'distanceFraction must be within 0.0-1.0',
@@ -57,6 +60,64 @@ class RoadmapMarker {
     );
   }
 
+  /// A ringed circle sitting on the road with a caption hanging beneath it —
+  /// the numbered-milestone look of printed roadmap infographics.
+  ///
+  /// The circle is what gets centred on the road; the caption overflows
+  /// below it without shifting the circle off the path.
+  factory RoadmapMarker.milestone({
+    required double distanceFraction,
+    required String label,
+    String? title,
+    String? body,
+    Color? color,
+    double diameter = 64,
+    double captionWidth = 180,
+    VoidCallback? onTap,
+    String? semanticLabel,
+    Offset offset = Offset.zero,
+  }) {
+    return RoadmapMarker(
+      distanceFraction: distanceFraction,
+      onTap: onTap,
+      offset: offset,
+      // The caption deliberately overflows the circle's box.
+      keepInBounds: false,
+      semanticLabel: semanticLabel ??
+          [label, title, body].whereType<String>().join(', ').ifEmpty(null),
+      child: _MilestoneMarker(
+        label: label,
+        title: title,
+        body: body,
+        color: color,
+        diameter: diameter,
+        captionWidth: captionWidth,
+      ),
+    );
+  }
+
+  /// A teardrop map pin whose tip rests on the road, with an optional
+  /// caption beside it — the pinned-step look of slide-deck roadmaps.
+  factory RoadmapMarker.pin({
+    required double distanceFraction,
+    required String label,
+    Color? color,
+    double size = 44,
+    VoidCallback? onTap,
+    String? semanticLabel,
+    Offset offset = Offset.zero,
+  }) {
+    return RoadmapMarker(
+      distanceFraction: distanceFraction,
+      onTap: onTap,
+      offset: offset,
+      // A pin points at its target, so it stands on its tip.
+      anchor: Alignment.bottomCenter,
+      semanticLabel: semanticLabel ?? label,
+      child: _PinMarker(label: label, color: color, size: size),
+    );
+  }
+
   /// Position along the road, from 0.0 (start) to 1.0 (end).
   final double distanceFraction;
 
@@ -84,6 +145,12 @@ class RoadmapMarker {
   /// merging them. Useful when the child renders decorative text that would
   /// otherwise be announced twice.
   final bool excludeChildSemantics;
+
+  /// Which point of the marker sits on the road. Defaults to
+  /// [Alignment.center]; [Alignment.bottomCenter] makes the marker stand
+  /// above the road on its bottom edge, which is what a map pin wants so
+  /// its tip lands on the path.
+  final Alignment anchor;
 }
 
 extension on String {
@@ -150,4 +217,158 @@ class _RoadmapMarkerCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Ringed circle on the road with a caption overflowing beneath it. The
+/// widget measures as just the circle, so the road point stays on the
+/// circle's centre however tall the caption grows.
+class _MilestoneMarker extends StatelessWidget {
+  const _MilestoneMarker({
+    required this.label,
+    required this.title,
+    required this.body,
+    required this.color,
+    required this.diameter,
+    required this.captionWidth,
+  });
+
+  final String label;
+  final String? title;
+  final String? body;
+  final Color? color;
+  final double diameter;
+  final double captionWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final Color ring = color ?? theme.colorScheme.primary;
+    final bool hasCaption = title != null || body != null;
+
+    return SizedBox(
+      width: diameter,
+      height: diameter,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: theme.colorScheme.surface,
+              border: Border.all(color: ring, width: diameter * 0.09),
+            ),
+            child: Center(
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontSize: diameter * 0.3,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+            ),
+          ),
+          if (hasCaption)
+            Positioned(
+              top: diameter + 8,
+              width: captionWidth,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (title != null)
+                    Text(
+                      title!,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.titleSmall?.copyWith(color: ring),
+                    ),
+                  if (body != null)
+                    Text(
+                      body!,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A teardrop map pin: a filled disc tapering to a point at the bottom.
+class _PinMarker extends StatelessWidget {
+  const _PinMarker({
+    required this.label,
+    required this.color,
+    required this.size,
+  });
+
+  final String label;
+  final Color? color;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final Color fill = color ?? theme.colorScheme.primary;
+    return SizedBox(
+      width: size,
+      height: size * 1.35,
+      child: CustomPaint(
+        painter: _PinPainter(fill),
+        child: Padding(
+          padding: EdgeInsets.only(bottom: size * 0.35),
+          child: Center(
+            child: Text(
+              label,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: _onColor(fill),
+                fontSize: size * 0.32,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static Color _onColor(Color background) =>
+      ThemeData.estimateBrightnessForColor(background) == Brightness.dark
+          ? const Color(0xFFFFFFFF)
+          : const Color(0xFF000000);
+}
+
+class _PinPainter extends CustomPainter {
+  const _PinPainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double radius = size.width / 2;
+    final Offset centre = Offset(radius, radius);
+    final Offset tip = Offset(radius, size.height);
+
+    // Circle, plus a triangle that meets it along its tangents so the join
+    // reads as one teardrop rather than a disc with a spike.
+    final double sinA = radius / (tip - centre).distance;
+    final double angle = math.asin(sinA.clamp(-1.0, 1.0));
+
+    final path = Path()
+      ..addArc(
+        Rect.fromCircle(center: centre, radius: radius),
+        math.pi / 2 - angle,
+        2 * angle - 2 * math.pi,
+      )
+      ..lineTo(tip.dx, tip.dy)
+      ..close();
+
+    canvas.drawPath(path, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_PinPainter oldDelegate) => oldDelegate.color != color;
 }

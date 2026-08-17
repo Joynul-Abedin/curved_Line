@@ -206,6 +206,142 @@ class StraightCurveStyle extends RoadCurveStyle {
   int get hashCode => (StraightCurveStyle).hashCode;
 }
 
+/// A serpentine (boustrophedon) road: straight runs across the cross axis,
+/// joined by semicircular U-turns at alternating ends — the classic
+/// "roadmap infographic" layout, where each run carries a row of milestones.
+///
+/// Unlike the other shapes this one is not a single continuous sweep across
+/// the road's width, so it works in raw [RoadmapGeometry.mapPoint] space
+/// rather than progress space: the path doubles back on itself, which
+/// progress space cannot express.
+///
+/// The runs are inset far enough for the U-turns to stay inside the widget,
+/// so the whole road always fits its box.
+class SerpentineCurveStyle extends RoadCurveStyle {
+  /// Creates a serpentine road of [rows] straight runs.
+  const SerpentineCurveStyle({this.rows, this.startFromFarSide = false});
+
+  /// Number of straight runs. Falls back to [RoadmapGeometry.curveCount].
+  final int? rows;
+
+  /// Starts the first run at the far side (right, or bottom when
+  /// horizontal) and works back, instead of starting at the near side.
+  final bool startFromFarSide;
+
+  @override
+  int segmentCount(RoadmapGeometry geometry) => _rowCount(geometry);
+
+  int _rowCount(RoadmapGeometry geometry) =>
+      math.max(1, rows ?? geometry.curveCount);
+
+  @override
+  Path build(Size size, RoadmapGeometry geometry) {
+    final int n = _rowCount(geometry);
+    final path = Path();
+    if (size.isEmpty) return path;
+
+    double alongFor(int i) => n == 1
+        ? (geometry.alongStart + geometry.alongEnd) / 2
+        : geometry.alongStart +
+            (geometry.alongEnd - geometry.alongStart) * (i / (n - 1));
+
+    // Work out the U-turn radius from the real pixel gap between runs, so
+    // the turns are true semicircles whatever the widget's aspect ratio.
+    final double rowGapPx = n == 1
+        ? 0
+        : (geometry.mapPoint(alongFor(1), 0.5, size) -
+                geometry.mapPoint(alongFor(0), 0.5, size))
+            .distance;
+    final double alongRadiusPx = rowGapPx / 2;
+
+    final Offset crossSpan = geometry.mapPoint(alongFor(0), 1.0, size) -
+        geometry.mapPoint(alongFor(0), 0.0, size);
+    final double crossExtentPx = crossSpan.distance;
+
+    // A turn wants to be a semicircle of radius rowGap/2, but on a narrow
+    // canvas that would consume the whole width and leave no straight run
+    // at all. Cap how much width a turn may take and let it flatten into an
+    // ellipse — which is what tight infographic layouts do anyway.
+    final double crossRadiusPx = math.min(
+      alongRadiusPx,
+      geometry.curveAmplitude * crossExtentPx * 0.5,
+    );
+    final double inset =
+        crossExtentPx <= 0 ? 0 : (crossRadiusPx / crossExtentPx);
+
+    double near = 0.5 - geometry.curveAmplitude + inset;
+    double far = 0.5 + geometry.curveAmplitude - inset;
+    if (startFromFarSide) {
+      final double swap = near;
+      near = far;
+      far = swap;
+    }
+
+    final double crossLength = crossSpan.distance;
+    final Offset crossUnit =
+        crossLength == 0 ? Offset.zero : crossSpan / crossLength;
+
+    // Map the two radii onto x/y for this orientation: `cross` is the x
+    // axis when the road winds vertically, and the y axis when horizontal.
+    final Radius turnRadius =
+        geometry.orientation == RoadmapOrientation.vertical
+            ? Radius.elliptical(crossRadiusPx, alongRadiusPx)
+            : Radius.elliptical(alongRadiusPx, crossRadiusPx);
+
+    Offset? previousEnd;
+    double previousEndCross = 0;
+    for (int i = 0; i < n; i++) {
+      final bool forward = i.isEven;
+      final double along = alongFor(i);
+      final double startCross = forward ? near : far;
+      final double endCross = forward ? far : near;
+      final Offset start = geometry.mapPoint(along, startCross, size);
+      final Offset end = geometry.mapPoint(along, endCross, size);
+
+      if (previousEnd == null) {
+        path.moveTo(start.dx, start.dy);
+      } else {
+        // The turn sits at the cross position both runs share, so its
+        // bulge direction follows that side of the road's centre line.
+        final Offset outward = previousEndCross >= 0.5 ? crossUnit : -crossUnit;
+        _uTurn(path, previousEnd, start, turnRadius, outward);
+      }
+      path.lineTo(end.dx, end.dy);
+      previousEnd = end;
+      previousEndCross = endCross;
+    }
+    return path;
+  }
+
+  /// Joins the end of one run to the start of the next with a semicircle
+  /// bulging along [outward], away from the road's centre line.
+  void _uTurn(
+    Path path,
+    Offset from,
+    Offset to,
+    Radius radius,
+    Offset outward,
+  ) {
+    if (radius.x <= 0 || radius.y <= 0) {
+      path.lineTo(to.dx, to.dy);
+      return;
+    }
+    final Offset travel = to - from;
+    final bool clockwise =
+        (travel.dx * outward.dy - travel.dy * outward.dx) < 0;
+    path.arcToPoint(to, radius: radius, clockwise: clockwise);
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is SerpentineCurveStyle &&
+      other.rows == rows &&
+      other.startFromFarSide == startFromFarSide;
+
+  @override
+  int get hashCode => Object.hash(SerpentineCurveStyle, rows, startFromFarSide);
+}
+
 /// Full manual control over the road's shape: you place every turn.
 ///
 /// Ignores [RoadmapGeometry.curveCount]/[RoadmapGeometry.curveAmplitude]
