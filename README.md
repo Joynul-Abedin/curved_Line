@@ -13,11 +13,11 @@ runs on all six platforms.
 
 | Markers + progress | Marker cards | Gradient + animation |
 |---|---|---|
-| <img src="doc/screenshots/markers_progress.png" width="200"> | <img src="doc/screenshots/marker_cards.png" width="200"> | <img src="doc/screenshots/gradient_animation.png" width="200"> |
+| <img src="https://raw.githubusercontent.com/Joynul-Abedin/curved_Line/main/doc/screenshots/markers_progress.png" width="200"> | <img src="https://raw.githubusercontent.com/Joynul-Abedin/curved_Line/main/doc/screenshots/marker_cards.png" width="200"> | <img src="https://raw.githubusercontent.com/Joynul-Abedin/curved_Line/main/doc/screenshots/gradient_animation.png" width="200"> |
 
 | Serpentine milestones | Serpentine with map pins | Captions beside the road |
 |---|---|---|
-| <img src="doc/screenshots/serpentine_milestones.png" width="200"> | <img src="doc/screenshots/serpentine_pins.png" width="200"> | <img src="doc/screenshots/side_captions.png" width="200"> |
+| <img src="https://raw.githubusercontent.com/Joynul-Abedin/curved_Line/main/doc/screenshots/serpentine_milestones.png" width="200"> | <img src="https://raw.githubusercontent.com/Joynul-Abedin/curved_Line/main/doc/screenshots/serpentine_pins.png" width="200"> | <img src="https://raw.githubusercontent.com/Joynul-Abedin/curved_Line/main/doc/screenshots/side_captions.png" width="200"> |
 
 Every screen above is in the [example app](example), along with horizontal
 scrollable roads, curve variants, theming and arbitrary placement.
@@ -26,7 +26,7 @@ scrollable roads, curve variants, theming and arbitrary placement.
 
 ```yaml
 dependencies:
-  curved_roadmap: ^0.1.0
+  curved_roadmap: ^0.1.1
 ```
 
 ## Quick start

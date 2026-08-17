@@ -1,3 +1,11 @@
+## 0.1.1
+
+- Fix broken README images on the API documentation pages. The relative image
+  paths only resolved on the pub.dev package page, which rewrites them against
+  the repository; dartdoc resolved them against the docs URL instead and 404ed.
+  They are absolute URLs now, so they render on GitHub, pub.dev and dartdoc
+  alike. No code changes.
+
 ## 0.1.0
 
 Initial release.

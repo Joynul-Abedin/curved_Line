@@ -1,6 +1,6 @@
 name: curved_roadmap
 description: A configurable Flutter widget for curved, winding roadmap and journey paths, with milestone markers, progress fill, gradients and draw-in animation.
-version: 0.1.0
+version: 0.1.1
 repository: https://github.com/Joynul-Abedin/curved_Line
 issue_tracker: https://github.com/Joynul-Abedin/curved_Line/issues
 topics:
